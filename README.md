@@ -5,7 +5,7 @@
 
 <!--ts-->
 - [💻 Implantação de WordPress com Amazon ECS usando AWS CloudFormation ](#-Implantação-de-WordPress-com-Amazon-ECS-usando-AWS-CloudFormation)
-- [🪄 Passo a Passo ](#-passo-a-passo)
+- [✅ Passo a Passo ](#-passo-a-passo)
 - [:zany_face: Equipe ](#-passo-a-passo)
 
 <!--te-->
