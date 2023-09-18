@@ -192,7 +192,7 @@ Resources:
             AllocationId: !GetAtt NatGatewayTwoAttachment.AllocationId
             SubnetId: !Ref PublicSubnetTwo
 
-        # Rotear os IPs das subnets
+    # Rotear os IPs das subnets
     PrivateRouteTableOne:
         Type: 'AWS::EC2::RouteTable'
         Properties:
@@ -256,15 +256,19 @@ Resources:
         Type: AWS::ElasticLoadBalancingV2::TargetGroup
         Properties:
             Name: WordPressTargetGroup
-            HealthCheckIntervalSeconds: 60
             HealthCheckPath: /
             HealthCheckProtocol: HTTP
-            HealthCheckTimeoutSeconds: 50
-            HealthyThresholdCount: 2
+            TargetType: ip
+            Matcher:
+                HttpCode: 200-299,302
             Port: 80
             Protocol: HTTP
-            UnhealthyThresholdCount: 2
             VpcId: !Ref 'VPC'
+            TargetGroupAttributes:
+                - Key: stickiness.enabled
+                  Value: true
+                - Key: stickiness.type
+                  Value: lb_cookie
 
     WordPressListener:
         Type: 'AWS::ElasticLoadBalancingV2::Listener'
@@ -333,8 +337,8 @@ Resources:
             DBSubnetGroupName: wp-db-subnet-group
             DBSubnetGroupDescription: wp-db-subnet-group
             SubnetIds:
-                - !Ref PublicSubnetOne
-                - !Ref PublicSubnetTwo
+                - !Ref PrivateSubnetOne
+                - !Ref PrivateSubnetTwo
 
     DBSecurityGroup:
         Type: AWS::EC2::SecurityGroup
@@ -346,7 +350,7 @@ Resources:
                 - IpProtocol: 'tcp'
                   FromPort: 3306
                   ToPort: 3306
-                  CidrIp: 10.0.0.0/16
+                  SourceSecurityGroupId: !Ref ContainerSecurityGroup
 
     WordpressDB:
         Type: AWS::RDS::DBInstance
@@ -477,20 +481,20 @@ Resources:
     ##
     Service:
         Type: AWS::ECS::Service
-        DependsOn: LoadBalancerRule
         Properties:
             Cluster: !Ref ClusterName
             ServiceName: !Ref ServiceName
             TaskDefinition: !Ref TaskDefinition
             LaunchType: FARGATE
             DesiredCount: 2
+            EnableExecuteCommand: true
             HealthCheckGracePeriodSeconds: 300
             DeploymentConfiguration:
                 MinimumHealthyPercent: 50
                 MaximumPercent: 200
             NetworkConfiguration:
                 AwsvpcConfiguration:
-                    AssignPublicIp: ENABLED
+                    AssignPublicIp: DISABLED
                     SecurityGroups:
                         - !Ref ContainerSecurityGroup
                     Subnets:
@@ -499,7 +503,7 @@ Resources:
             LoadBalancers:
                 - ContainerName: !Ref ServiceName
                   ContainerPort: 80
-                  TargetGroupArn: !Ref TargetGroup
+                  TargetGroupArn: !Ref WordPressTargetGroup
 
     ##
     # Target Group para manter registro de todas as tasks
@@ -507,17 +511,18 @@ Resources:
     TargetGroup:
         Type: AWS::ElasticLoadBalancingV2::TargetGroup
         Properties:
-            HealthCheckIntervalSeconds: 60
             HealthCheckPath: /
             HealthCheckProtocol: HTTP
-            HealthCheckTimeoutSeconds: 50
-            HealthyThresholdCount: 2
             TargetType: ip
             Name: !Ref 'ServiceName'
             Port: 80
             Protocol: HTTP
-            UnhealthyThresholdCount: 2
             VpcId: !Ref 'VPC'
+            TargetGroupAttributes:
+                - Key: stickiness.enabled
+                  Value: true
+                - Key: stickiness.type
+                  Value: lb_cookie
 
     # Regra no load balancer para rotear o trafego para o target group
     LoadBalancerRule:
