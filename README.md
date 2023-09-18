@@ -18,7 +18,7 @@ Criou uma pilha do AWS CloudFormation para implantar um ambiente altamente dispo
 
 O ambiente incluirá um cluster ECS, uma definição de tarefa, um serviço, um balanceador de carga, dimensionamento automático e um sistema de arquivos EFS para armazenar dados persistentes do WordPress.
 
-# 🪄 Passo a Passo:
+# ✅ Passo a Passo:
 
 ### 🪄 Repositório:
 Crie um Repositório no GitHub: Crie um repositório no GitHub para armazenar todos os artefatos relacionados a este projeto, incluindo o template do CloudFormation e outros arquivos relevantes, lembre-se de escrever um Readme para essa aplicação.
