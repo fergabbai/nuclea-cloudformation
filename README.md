@@ -14,15 +14,14 @@
 
 # 💻 Implantação de WordPress com Amazon ECS usando AWS CloudFormation
 
-Criar uma pilha do AWS CloudFormation para implantar um ambiente altamente disponível do WordPress usando o Amazon ECS (Elastic Container Service).
+Criou uma pilha do AWS CloudFormation para implantar um ambiente altamente disponível do WordPress usando o Amazon ECS (Elastic Container Service).
 
 O ambiente incluirá um cluster ECS, uma definição de tarefa, um serviço, um balanceador de carga, dimensionamento automático e um sistema de arquivos EFS para armazenar dados persistentes do WordPress.
 
-Projeto desenvolvimento para o módulo de Provisionamento como Código (AWS)
-oferecido pela [Ada Tech](https://www.linkedin.com/school/adatechbr/) 
-em parceria com a [Núclea](https://www.linkedin.com/company/nucleabr/).
-
 # ✅ Passo a Passo:
+
+### 🪄 Repositório:
+Crie um Repositório no GitHub: Crie um repositório no GitHub para armazenar todos os artefatos relacionados a este projeto, incluindo o template do CloudFormation e outros arquivos relevantes, lembre-se de escrever um Readme para essa aplicação.
 
 ### 🪄 Template:
 Defina o Template do CloudFormation: No repositório, crie um arquivo chamado ecs-wordpress-stack.yml (ou outro nome de sua escolha) que conterá o template do CloudFormation. Este arquivo definirá todos os recursos necessários para a infraestrutura.
@@ -30,6 +29,7 @@ Defina o Template do CloudFormation: No repositório, crie um arquivo chamado ec
 ### 🪄 Infraestrutura:
 Descreva a Infraestrutura: No template do CloudFormation, defina os seguintes recursos:
 
+### 🪄 Cluster, Containers, Balanceador e Dimensionamento automático :
 Um cluster ECS para hospedar os containers do WordPress.
 Uma definição de tarefa que especifica como os containers do WordPress serão configurados.
 Um serviço ECS para garantir que a tarefa do WordPress seja sempre executada.

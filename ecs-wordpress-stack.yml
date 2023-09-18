@@ -506,38 +506,6 @@ Resources:
                   TargetGroupArn: !Ref WordPressTargetGroup
 
     ##
-    # Target Group para manter registro de todas as tasks
-    ##
-    TargetGroup:
-        Type: AWS::ElasticLoadBalancingV2::TargetGroup
-        Properties:
-            HealthCheckPath: /
-            HealthCheckProtocol: HTTP
-            TargetType: ip
-            Name: !Ref 'ServiceName'
-            Port: 80
-            Protocol: HTTP
-            VpcId: !Ref 'VPC'
-            TargetGroupAttributes:
-                - Key: stickiness.enabled
-                  Value: true
-                - Key: stickiness.type
-                  Value: lb_cookie
-
-    # Regra no load balancer para rotear o trafego para o target group
-    LoadBalancerRule:
-        Type: AWS::ElasticLoadBalancingV2::ListenerRule
-        Properties:
-            Actions:
-                - TargetGroupArn: !Ref 'TargetGroup'
-                  Type: 'forward'
-            Conditions:
-                - Field: path-pattern
-                  Values:
-                      - /
-            ListenerArn: !Ref WordPressListener
-            Priority: 1
-    ##
     # Application Auto Scaling
     ##
     ServiceAutoScalingRole:
