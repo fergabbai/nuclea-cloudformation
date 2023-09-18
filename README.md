@@ -6,6 +6,7 @@
 <!--ts-->
 - [💻 Implantação de WordPress com Amazon ECS usando AWS CloudFormation ](#-Implantação-de-WordPress-com-Amazon-ECS-usando-AWS-CloudFormation)
 - [🪄 Passo a Passo ](#-passo-a-passo)
+- [:zany_face: Equipe ](#-passo-a-passo)
 
 <!--te-->
 
@@ -46,3 +47,18 @@ Verifique o Ambiente: Após a conclusão da implantação, verifique se o ambien
 
 ### 🪄 Recomendações:
 Lembre-se de seguir as práticas recomendadas do CloudFormation, como nomear recursos adequadamente, adicionar descrições claras e aplicar políticas de segurança apropriadas. Esta é uma tarefa complexa, portanto, não hesite em consultar a documentação oficial da AWS para obter orientações detalhadas ao longo do processo.
+
+### 🪄 Equipe:
+
+</br>
+📄 Andreza Pipolo [Andreza Pipolo ](https://github.com/andrezapipolo/#/).
+</br>
+</br>
+📄 Fernanda Gabbai Amorim [Fernanda Gabbai Amorim](https://github.com/fergabbai/#/).
+</br>
+</br>
+📄 Michelle Lira [Michelle Lira](https://github.com/michelle-lira/#/).
+</br>
+</br>
+📄 Tatiane Paiva [Tatiane Paiva](https://github.com/Tatimoriam/#/).
+</br>
