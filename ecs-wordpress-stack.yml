@@ -233,8 +233,23 @@ Resources:
             GroupDescription: Acesso para o load balance publico
             VpcId: !Ref 'VPC'
             SecurityGroupIngress:
-                - CidrIp: 0.0.0.0/0
-                  IpProtocol: -1
+                - Description: Allow traffic from the internet on port 80.
+                  IpProtocol: tcp
+                  FromPort: 80
+                  ToPort: 80
+                  CidrIp: 0.0.0.0/0
+
+    WordPressLoadBalancer:
+        Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+        Properties:
+            Name: WordPressLoadBalancer
+            Scheme: internet-facing
+            Type: application
+            Subnets:
+                - !Ref 'PublicSubnetOne'
+                - !Ref 'PublicSubnetTwo'
+            SecurityGroups:
+                - !Ref WPLoadingBalanceSG
 
     WordPressTargetGroup:
         DependsOn: WordPressLoadBalancer
@@ -250,20 +265,6 @@ Resources:
             Protocol: HTTP
             UnhealthyThresholdCount: 2
             VpcId: !Ref 'VPC'
-
-    WordPressLoadBalancer:
-        Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
-        Properties:
-            Name: WordPressLoadBalancer
-            Scheme: internet-facing
-            LoadBalancerAttributes:
-                - Key: idle_timeout.timeout_seconds
-                  Value: '30'
-            Subnets:
-                - !Ref 'PublicSubnetOne'
-                - !Ref 'PublicSubnetTwo'
-            SecurityGroups:
-                - !Ref WPLoadingBalanceSG
 
     WordPressListener:
         Type: 'AWS::ElasticLoadBalancingV2::Listener'
@@ -293,9 +294,9 @@ Resources:
     MountTargetSecurityGroup:
         Type: AWS::EC2::SecurityGroup
         Properties:
+            GroupName: Wordpress-Demo-EFS-SG
             GroupDescription: FileSystem Security Group
             VpcId: !Ref VPC
-            GroupName: Wordpress-Demo-EFS-SG
             SecurityGroupIngress:
                 - IpProtocol: 'tcp'
                   FromPort: 2049
@@ -306,7 +307,7 @@ Resources:
         Type: AWS::EFS::MountTarget
         Properties:
             FileSystemId: !Ref EFSFileSystem
-            SubnetId: !Ref PublicSubnetOne
+            SubnetId: !Ref PrivateSubnetOne
             SecurityGroups:
                 - !Ref MountTargetSecurityGroup
 
@@ -314,7 +315,7 @@ Resources:
         Type: AWS::EFS::MountTarget
         Properties:
             FileSystemId: !Ref EFSFileSystem
-            SubnetId: !Ref PublicSubnetTwo
+            SubnetId: !Ref PrivateSubnetTwo
             SecurityGroups:
                 - !Ref MountTargetSecurityGroup
 
@@ -322,15 +323,6 @@ Resources:
         Type: AWS::EFS::AccessPoint
         Properties:
             FileSystemId: !Ref EFSFileSystem
-            PosixUser: #
-                Uid: '1000'
-                Gid: '1000'
-            RootDirectory: #
-                CreationInfo:
-                    OwnerGid: '1000'
-                    OwnerUid: '1000'
-                    Permissions: '0777'
-                Path: '/bitnami'
 
     ##
     # Criacao do BD no RDS
@@ -378,6 +370,8 @@ Resources:
         Type: AWS::ECS::Cluster
         Properties:
             ClusterName: !Ref ClusterName
+            CapacityProviders:
+                - FARGATE
 
     ContainerSecurityGroup:
         Type: AWS::EC2::SecurityGroup
@@ -385,58 +379,11 @@ Resources:
             GroupDescription: Acesso aos containers SG
             VpcId: !Ref 'VPC'
             SecurityGroupIngress:
-                IpProtocol: tcp
-                FromPort: 0
-                ToPort: 65535
-                SourceSecurityGroupId: !Ref 'WPLoadingBalanceSG'
-
-    # Um grupo de log guardando os stdout logs dos servicos deste containers
-    LogGroup:
-        Type: AWS::Logs::LogGroup
-        Properties:
-            LogGroupName: !Sub 'service-${ServiceName}'
-
-    ##
-    # Definicao da Task
-    ##
-    TaskDefinition:
-        Type: AWS::ECS::TaskDefinition
-        Properties:
-            Family: !Ref 'ServiceName'
-            NetworkMode: awsvpc
-            RequiresCompatibilities:
-                - FARGATE
-            ExecutionRoleArn: !Ref ECSTaskExecutionRole
-            Cpu: !Ref ContainerCpu
-            Memory: !Ref ContainerMemory
-            ContainerDefinitions:
-                - Name: !Ref 'ServiceName'
-                  Image: wordpress:latest
-                  Cpu: !Ref ContainerCpu
-                  Memory: !Ref ContainerMemory
-                  LogConfiguration:
-                      LogDriver: 'awslogs'
-                      Options:
-                          awslogs-group: !Sub 'service-${ServiceName}'
-                          awslogs-region: !Ref 'AWS::Region'
-                          awslogs-stream-prefix: !Ref 'ServiceName'
-                  Environment:
-                      - Name: WORDPRESS_DB_USER
-                        Value: !Ref DBUsername
-                      - Name: WORDPRESS_DB_PASSWORD
-                        Value: !Ref DBPassword
-                      - Name: WORDPRESS_DB_NAME
-                        Value: !Ref DBName
-                  PortMappings:
-                      - ContainerPort: 80
-            Volumes:
-                - Name: wordpress
-                  EFSVolumeConfiguration:
-                      FilesystemId: !Ref EFSFileSystem
-                      TransitEncryption: ENABLED
-                      AuthorizationConfig:
-                          AccessPointId: !Ref AccessPoint
-                          IAM: DISABLED
+                - Description: Allow traffic from LoadBalancerSecurityGroup on port 80.
+                  IpProtocol: tcp
+                  FromPort: 80
+                  ToPort: 80
+                  CidrIp: 0.0.0.0/0
 
     ECSTaskExecutionRole:
         Type: AWS::IAM::Role
@@ -454,10 +401,81 @@ Resources:
             ManagedPolicyArns:
                 - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
+    # Um grupo de log guardando os stdout logs dos servicos deste containers
+    LogGroup:
+        Type: AWS::Logs::LogGroup
+        Properties:
+            LogGroupName: !Sub 'service-${ServiceName}'
+            RetentionInDays: 1
+
+    ##
+    # Definicao da Task
+    ##
+    TaskDefinition:
+        Type: AWS::ECS::TaskDefinition
+        Properties:
+            Family: !Ref 'ServiceName'
+            NetworkMode: awsvpc
+            RequiresCompatibilities:
+                - FARGATE
+            ExecutionRoleArn: !Ref ECSTaskExecutionRole
+            TaskRoleArn: !Ref ECSTaskRole
+            Cpu: !Ref ContainerCpu
+            Memory: !Ref ContainerMemory
+            ContainerDefinitions:
+                - Name: !Ref 'ServiceName'
+                  Image: wordpress:latest
+                  Essential: true
+                  LogConfiguration:
+                      LogDriver: 'awslogs'
+                      Options:
+                          awslogs-group: !Sub 'service-${ServiceName}'
+                          awslogs-region: !Ref 'AWS::Region'
+                          awslogs-stream-prefix: !Ref 'ServiceName'
+                  Environment:
+                      - Name: WORDPRESS_DB_HOST
+                        Value: !GetAtt WordpressDB.Endpoint.Address
+                      - Name: WORDPRESS_DB_USER
+                        Value: !Ref DBUsername
+                      - Name: WORDPRESS_DB_PASSWORD
+                        Value: !Ref DBPassword
+                      - Name: WORDPRESS_DB_NAME
+                        Value: !Ref DBName
+                  PortMappings:
+                      - ContainerPort: 80
+                        Protocol: tcp
+                  MountPoints:
+                      - SourceVolume: EFS
+                        ContainerPath: /var/www/html
+                        ReadOnly: false
+            Volumes:
+                - Name: EFS
+                  EFSVolumeConfiguration:
+                      FilesystemId: !Ref EFSFileSystem
+                      TransitEncryption: ENABLED
+                      AuthorizationConfig:
+                          AccessPointId: !Ref AccessPoint
+                          IAM: DISABLED
+
+    ECSTaskRole:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: !Sub ${AWS::StackName}-ECSTaskRole
+            Description: !Sub ${AWS::StackName} ECS Task Role.
+            AssumeRolePolicyDocument:
+                Version: 2012-10-17
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service:
+                              - ecs-tasks.amazonaws.com
+                      Action:
+                          - sts:AssumeRole
+
     ##
     # Definicao do Servico
     ##
-    ECSService:
+    Service:
         Type: AWS::ECS::Service
         DependsOn: LoadBalancerRule
         Properties:
@@ -466,6 +484,7 @@ Resources:
             TaskDefinition: !Ref TaskDefinition
             LaunchType: FARGATE
             DesiredCount: 2
+            HealthCheckGracePeriodSeconds: 300
             DeploymentConfiguration:
                 MinimumHealthyPercent: 50
                 MaximumPercent: 200
@@ -513,12 +532,49 @@ Resources:
                       - /
             ListenerArn: !Ref WordPressListener
             Priority: 1
+    ##
+    # Application Auto Scaling
+    ##
+    ServiceAutoScalingRole:
+        Type: AWS::IAM::Role
+        Properties:
+            RoleName: !Join ['', [!GetAtt Service.Name, AutoScalingRole]]
+            AssumeRolePolicyDocument:
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                          Service: ecs-tasks.amazonaws.com
+                      Action: sts:AssumeRole
+            ManagedPolicyArns:
+                - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole
+
+    ServiceAutoScalingTarget:
+        Type: AWS::ApplicationAutoScaling::ScalableTarget
+        Properties:
+            MinCapacity: 1
+            MaxCapacity: 2
+            ResourceId:
+                !Join ['/', [service, !Ref ECSCluster, !GetAtt Service.Name]]
+            ScalableDimension: ecs:service:DesiredCount
+            ServiceNamespace: ecs
+            RoleARN: !GetAtt ServiceAutoScalingRole.Arn
+
+    ServiceAutoScalingPolicy:
+        Type: AWS::ApplicationAutoScaling::ScalingPolicy
+        Properties:
+            PolicyName: !Join ['', [!GetAtt Service.Name, AutoScalingPolicy]]
+            PolicyType: TargetTrackingScaling
+            ScalingTargetId: !Ref ServiceAutoScalingTarget
+            TargetTrackingScalingPolicyConfiguration:
+                TargetValue: 75
+                PredefinedMetricSpecification:
+                    PredefinedMetricType: ECSServiceAverageCPUUtilization
 
 Outputs:
     WordPressClusterName:
         Value: !Ref ECSCluster
     WordPressServiceName:
-        Value: !Ref ECSService
+        Value: !Ref Service
     ExternalUrl:
         Description: a url do load balancer externo
         Value: !Sub http://${WordPressLoadBalancer.DNSName}
