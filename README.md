@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 <h1 align="center">
     <br>
     <p align="center"> Implantação de WordPress com Amazon ECS usando AWS CloudFormation 🪄💻 <p>
@@ -64,4 +62,3 @@ Lembre-se de seguir as práticas recomendadas do CloudFormation, como nomear rec
 </br>
 📄 Tatiane Paiva (https://github.com/Tatimoriam/#/).
 </br>
->>>>>>> 1aaef3a3b8ac09d71dd1919942fcfbb55b94ddc3
