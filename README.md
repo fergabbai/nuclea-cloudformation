@@ -51,14 +51,14 @@ Lembre-se de seguir as práticas recomendadas do CloudFormation, como nomear rec
 ### 🪄 Equipe:
 
 </br>
-📄 Andreza Pipolo [Andreza Pipolo ](https://github.com/andrezapipolo/#/).
+📄 Andreza Pipolo (https://github.com/andrezapipolo/#/).
 </br>
 </br>
-📄 Fernanda Gabbai Amorim [Fernanda Gabbai Amorim](https://github.com/fergabbai/#/).
+📄 Fernanda Gabbai Amorim (https://github.com/fergabbai/#/).
 </br>
 </br>
-📄 Michelle Lira [Michelle Lira](https://github.com/michelle-lira/#/).
+📄 Michelle Lira (https://github.com/michelle-lira/#/).
 </br>
 </br>
-📄 Tatiane Paiva [Tatiane Paiva](https://github.com/Tatimoriam/#/).
+📄 Tatiane Paiva (https://github.com/Tatimoriam/#/).
 </br>
